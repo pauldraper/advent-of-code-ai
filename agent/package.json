@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1",
+    "argparse": "^2",
+    "jsdom": "^27",
+    "temporal-polyfill": "^0.3",
+    "turndown": "^7"
+  },
+  "name": "advent-of-code-runner",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0"
+}
