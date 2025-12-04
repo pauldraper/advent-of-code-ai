@@ -1,85 +1,40 @@
-from collections import deque
+#!/usr/bin/env python3
 
-def solve():
-    with open('input.txt', 'r') as f:
-        grid = [line.rstrip('\n') for line in f]
+# Read the grid from input
+with open('input.txt', 'r') as f:
+    grid = [line.strip() for line in f.readlines()]
 
-    # Find S and E
-    start = end = None
-    for r in range(len(grid)):
-        for c in range(len(grid[r])):
-            if grid[r][c] == 'S':
-                start = (r, c)
-            elif grid[r][c] == 'E':
-                end = (r, c)
+# Filter out empty lines
+grid = [line for line in grid if line]
 
-    # BFS to find distances from start and end without cheating
-    def bfs_distances(start_pos):
-        dist = {}
-        queue = deque([start_pos])
-        dist[start_pos] = 0
+rows = len(grid)
+cols = len(grid[0]) if rows > 0 else 0
 
-        while queue:
-            r, c = queue.popleft()
+# Count accessible rolls of paper
+count = 0
 
-            for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-                nr, nc = r + dr, c + dc
+# For each cell that contains a '@'
+for r in range(rows):
+    for c in range(cols):
+        if grid[r][c] == '@':
+            # Count neighbors that are '@'
+            neighbor_count = 0
+            # Check all 8 adjacent cells
+            for dr in [-1, 0, 1]:
+                for dc in [-1, 0, 1]:
+                    if dr == 0 and dc == 0:  # Skip the cell itself
+                        continue
+                    nr, nc = r + dr, c + dc
+                    if 0 <= nr < rows and 0 <= nc < cols:
+                        if grid[nr][nc] == '@':
+                            neighbor_count += 1
 
-                if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]):
-                    if (nr, nc) not in dist and grid[nr][nc] != '#':
-                        dist[(nr, nc)] = dist[(r, c)] + 1
-                        queue.append((nr, nc))
+            # Can be accessed if fewer than 4 neighbors
+            if neighbor_count < 4:
+                count += 1
 
-        return dist
+# Write result
+with open('output-1.txt', 'w') as f:
+    f.write(str(count))
 
-    dist_from_start = bfs_distances(start)
-    dist_from_end = bfs_distances(end)
-
-    # Normal time without any cheating
-    normal_time = dist_from_start[end]
-
-    # Find all possible cheats
-    cheats_saved = {}
-
-    # For each position on the track (not a wall)
-    for r in range(len(grid)):
-        for c in range(len(grid[r])):
-            if grid[r][c] == '#':
-                continue
-
-            # Try cheating from this position
-            # Cheat allows us to go through walls for up to 2 steps
-
-            # Try 1 step cheat
-            for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-                nr, nc = r + dr, c + dc
-                if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]):
-                    # End of cheat after 1 step
-                    if (nr, nc) in dist_from_start and grid[nr][nc] != '#':
-                        # Time: distance from start to (r,c) + 1 (cheat) + distance from (nr,nc) to end
-                        time_with_cheat = dist_from_start[(r, c)] + 1 + dist_from_end[(nr, nc)]
-                        if time_with_cheat < normal_time:
-                            saved = normal_time - time_with_cheat
-                            cheats_saved[(r, c, nr, nc)] = saved
-
-                    # Try 2 step cheat
-                    for dr2, dc2 in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-                        nr2, nc2 = nr + dr2, nc + dc2
-                        if 0 <= nr2 < len(grid) and 0 <= nc2 < len(grid[0]):
-                            if (nr2, nc2) in dist_from_start and grid[nr2][nc2] != '#':
-                                # Time: distance from start to (r,c) + 2 (cheat) + distance from (nr2,nc2) to end
-                                time_with_cheat = dist_from_start[(r, c)] + 2 + dist_from_end[(nr2, nc2)]
-                                if time_with_cheat < normal_time:
-                                    saved = normal_time - time_with_cheat
-                                    cheats_saved[(r, c, nr2, nc2)] = saved
-
-    # Count cheats that save at least 100 picoseconds
-    count = sum(1 for saved in cheats_saved.values() if saved >= 100)
-
-    with open('output-1.txt', 'w') as f:
-        f.write(str(count))
-
-    print(count)
-
-if __name__ == '__main__':
-    solve()
+print(count)

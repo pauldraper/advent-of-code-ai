@@ -1,63 +1,133 @@
 \--- Part Two ---
 -----------------
 
-The programs seem perplexed by your list of cheats. Apparently, the two-picosecond cheating rule was deprecated several milliseconds ago! The latest version of the cheating rule permits a single cheat that instead lasts at most _20 picoseconds_.
+Now, the Elves just need help accessing as much of the paper as they can.
 
-Now, in addition to all the cheats that were possible in just two picoseconds, many more cheats are possible. This six-picosecond cheat saves _76 picoseconds_:
+Once a roll of paper can be accessed by a forklift, it can be _removed_. Once a roll of paper is removed, the forklifts might be able to access _more_ rolls of paper, which they might also be able to remove. How many total rolls of paper could the Elves remove if they keep repeating this process?
 
-    ###############
-    #...#...#.....#
-    #.#.#.#.#.###.#
-    #S#...#.#.#...#
-    #1#####.#.#.###
-    #2#####.#.#...#
-    #3#####.#.###.#
-    #456.E#...#...#
-    ###.#######.###
-    #...###...#...#
-    #.#####.#.###.#
-    #.#...#.#.#...#
-    #.#.#.#.#.#.###
-    #...#...#...###
-    ###############
+Starting with the same example as above, here is one way you could remove as many rolls of paper as possible, using highlighted `_@_` to indicate that a roll of paper is about to be removed, and using `x` to indicate that a roll of paper was just removed:
+
+    Initial state:
+    ..@@.@@@@.
+    @@@.@.@.@@
+    @@@@@.@.@@
+    @.@@@@..@.
+    @@.@@@@.@@
+    .@@@@@@@.@
+    .@.@.@.@@@
+    @.@@@.@@@@
+    .@@@@@@@@.
+    @.@.@@@.@.
+    
+    Remove 13 rolls of paper:
+    ..xx.xx@x.
+    x@@.@.@.@@
+    @@@@@.x.@@
+    @.@@@@..@.
+    x@.@@@@.@x
+    .@@@@@@@.@
+    .@.@.@.@@@
+    x.@@@.@@@@
+    .@@@@@@@@.
+    x.x.@@@.x.
+    
+    Remove 12 rolls of paper:
+    .......x..
+    .@@.x.x.@x
+    x@@@@...@@
+    x.@@@@..x.
+    .@.@@@@.x.
+    .x@@@@@@.x
+    .x.@.@.@@@
+    ..@@@.@@@@
+    .x@@@@@@@.
+    ....@@@...
+    
+    Remove 7 rolls of paper:
+    ..........
+    .x@.....x.
+    .@@@@...xx
+    ..@@@@....
+    .x.@@@@...
+    ..@@@@@@..
+    ...@.@.@@x
+    ..@@@.@@@@
+    ..x@@@@@@.
+    ....@@@...
+    
+    Remove 5 rolls of paper:
+    ..........
+    ..x.......
+    .x@@@.....
+    ..@@@@....
+    ...@@@@...
+    ..x@@@@@..
+    ...@.@.@@.
+    ..x@@.@@@x
+    ...@@@@@@.
+    ....@@@...
+    
+    Remove 2 rolls of paper:
+    ..........
+    ..........
+    ..x@@.....
+    ..@@@@....
+    ...@@@@...
+    ...@@@@@..
+    ...@.@.@@.
+    ...@@.@@@.
+    ...@@@@@x.
+    ....@@@...
+    
+    Remove 1 roll of paper:
+    ..........
+    ..........
+    ...@@.....
+    ..x@@@....
+    ...@@@@...
+    ...@@@@@..
+    ...@.@.@@.
+    ...@@.@@@.
+    ...@@@@@..
+    ....@@@...
+    
+    Remove 1 roll of paper:
+    ..........
+    ..........
+    ...x@.....
+    ...@@@....
+    ...@@@@...
+    ...@@@@@..
+    ...@.@.@@.
+    ...@@.@@@.
+    ...@@@@@..
+    ....@@@...
+    
+    Remove 1 roll of paper:
+    ..........
+    ..........
+    ....x.....
+    ...@@@....
+    ...@@@@...
+    ...@@@@@..
+    ...@.@.@@.
+    ...@@.@@@.
+    ...@@@@@..
+    ....@@@...
+    
+    Remove 1 roll of paper:
+    ..........
+    ..........
+    ..........
+    ...x@@....
+    ...@@@@...
+    ...@@@@@..
+    ...@.@.@@.
+    ...@@.@@@.
+    ...@@@@@..
+    ....@@@...
     
 
-Because this cheat has the same start and end positions as the one above, it's the _same cheat_, even though the path taken during the cheat is different:
+Stop once no more rolls of paper are accessible by a forklift. In this example, a total of `_43_` rolls of paper can be removed.
 
-    ###############
-    #...#...#.....#
-    #.#.#.#.#.###.#
-    #S12..#.#.#...#
-    ###3###.#.#.###
-    ###4###.#.#...#
-    ###5###.#.###.#
-    ###6.E#...#...#
-    ###.#######.###
-    #...###...#...#
-    #.#####.#.###.#
-    #.#...#.#.#...#
-    #.#.#.#.#.#.###
-    #...#...#...###
-    ###############
-    
-
-Cheats don't need to use all 20 picoseconds; cheats can last any amount of time up to and including 20 picoseconds (but can still only end when the program is on normal track). Any cheat time not used is lost; it can't be saved for another cheat later.
-
-You'll still need a list of the best cheats, but now there are even more to choose between. Here are the quantities of cheats in this example that save _50 picoseconds or more_:
-
-*   There are 32 cheats that save 50 picoseconds.
-*   There are 31 cheats that save 52 picoseconds.
-*   There are 29 cheats that save 54 picoseconds.
-*   There are 39 cheats that save 56 picoseconds.
-*   There are 25 cheats that save 58 picoseconds.
-*   There are 23 cheats that save 60 picoseconds.
-*   There are 20 cheats that save 62 picoseconds.
-*   There are 19 cheats that save 64 picoseconds.
-*   There are 12 cheats that save 66 picoseconds.
-*   There are 14 cheats that save 68 picoseconds.
-*   There are 12 cheats that save 70 picoseconds.
-*   There are 22 cheats that save 72 picoseconds.
-*   There are 4 cheats that save 74 picoseconds.
-*   There are 3 cheats that save 76 picoseconds.
-
-Find the best cheats using the updated cheating rules. _How many cheats would save you at least 100 picoseconds?_
+Start with your original diagram. _How many rolls of paper in total can be removed by the Elves and their forklifts?_
