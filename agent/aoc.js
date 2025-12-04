@@ -50,10 +50,7 @@ export async function aocInputGet(session, { day, year }) {
   console.error(`Getting input ${year}/${day}`);
   const url = new URL(`${year}/day/${day}/input`, baseUrl);
   const response = await fetch(url, {
-    headers: {
-      Accept: "text/plain",
-      Cookie: `session=${session}`,
-    },
+    headers: { Accept: "text/plain", Cookie: `session=${session}` },
   });
   if (!response.ok) {
     throw new Error(`Failed to get input ${year}/${day}: ${response.status}`);

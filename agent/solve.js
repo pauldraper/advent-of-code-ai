@@ -8,6 +8,7 @@ import {
   inputPath,
   outputPath,
   problemPath,
+  solutionPath,
 } from "./common.js";
 import { join } from "node:path";
 import { getSessionToken } from "./config.js";
@@ -31,7 +32,9 @@ export async function solve({ day, year, midnight }) {
   let problem1, problem2, solution1, solution2;
   const refresh = async () => {
     for (const child of await readdir(".")) {
-      await rm(child, { force: true, recursive: true });
+      if (child !== solutionPath(1) && child !== solutionPath(2)) {
+        await rm(child, { force: true, recursive: true });
+      }
     }
 
     const [puzzle, input] = await Promise.all([
@@ -59,7 +62,7 @@ export async function solve({ day, year, midnight }) {
         : rm(answerPath(2), { force: true }),
     ]);
 
-    console.error("Wrote files");
+    console.error("Initialized files");
   };
 
   await refresh();
@@ -85,6 +88,7 @@ async function solvePart(
   part,
   { problem1, problem2, solution1, session },
 ) {
+  const start = performance.now();
   console.error(`Solving day ${day} part ${part}`);
 
   await mkdir(attemptsPath(part), { recursive: true });
@@ -93,32 +97,46 @@ async function solvePart(
     attempts.push(await readFile(join(attemptsPath(part), attempt), "utf8"));
   }
 
+  const options = {
+    disallowedTools: ["WebSearch"],
+    model: "claude-haiku-4-5",
+    permissionMode: "bypassPermissions",
+  };
   let sessionId;
+
+  const initialPrompt = `
+    You will be given the problem statement for a programming puzzle.
+    The problem statement will include example input and output.
+
+    Your task is to write a program to solve the puzzle.
+    The program should be saved in ${solutionPath(part)} and written in
+    Python. Run it with pypy3, for performance.
+    The program must read input from input.txt and write output to
+    ${outputPath(part)}.
+
+    Use example input and output from the problem statement to verify the
+    program's correctness. Don't run extra tests, unless you get an incorrect answer.
+
+    The problem input is in ${inputPath()}. When the program is complete, copy
+    ${inputPath()} to input.txt, run the program, and write the final answer to
+    ${outputPath(part)} .
+
+    Time is limited. Solve as quickly as possible. 
+    Don't clean up files or take other
+    unnecessary steps. Don't perform any git operations.
+    The problem will not require a program taking longer than 15 seconds to run.
+    Use the \`timeout\` command to limit the running time.
+
+    Read and write all files in the current directory. Do not access /tmp or other
+    directories.
+
+    ${attempts.length ? `Previous incorrect answers:\n${attempts.join("\n")}` : ""}
+  `;
 
   const prompt =
     part === 1
       ? `
-      You will be given the problem statement for a programming puzzle.
-      The problem statement will include example input and output.
-
-      Your task is to write a program to solve the puzzle.
-      The program should be written in Python and use pypy3.
-      It should read input from ./${inputPath(part)}.tmp and write output to
-      ./${outputPath(part)}.
-
-      Use the example input and output from the problem statement to verify the
-      program's correctness.
-
-      The input for the final answer is ./${inputPath()}. When the program is
-      complete, copy that to ./${inputPath(part)}.tmp and write the final answer to
-      ./${outputPath(part)}.
-
-      Don't write extra tests, unless you get an incorrect answer.
-      Time is limited. Solve as quickly as possible. Don't clean up files or take other
-      unnecessary steps. Don't perform any git operations.
-      The problem will not require a program taking longer than 15 seconds to run.
-
-      ${attempts.length ? `Previous incorrect answers:\n${attempts.join("\n")}` : ""}
+      ${initialPrompt}
 
       Here is the problem statement:
       <problem id="1">
@@ -126,34 +144,14 @@ async function solvePart(
       </problem>
     `
       : `
-      You will be given the problem statement for a programming puzzle.
-      The problem statement will include example input and output.
-
-      Your task is to write a program to solve the puzzle.
-      The program should be written in Python and use pypy3.
-      It should read input from ./${inputPath(part)}.tmp and write answer to
-      ./${outputPath(part)}.
-
-      Use the example input and output from the problem statement to verify the
-      program's correctness.
-
-      The input for the final answer is ./${inputPath()}. When the program is
-      complete, copy that to ./${inputPath(part)}.tmp and write the final output to
-      ./${outputPath(part)}.
-
-      Don't write extra tests, unless you get an incorrect answer.
-      Time is limited. Solve as quickly as possible. Don't clean up files or take other
-      unnecessary steps. Don't perform any git operations.
-      The problem will not require a program taking longer than 15 seconds to run.
-
-      ${attempts.length ? `Previous incorrect answers:\n${attempts.join("\n")}` : ""}
+      ${initialPrompt}
 
       Here is the problem statement for the already solved part 1:
       <problem id="1">
       ${problem1}
       </problem>
 
-      That has the answer:
+      Part 1 has the answer:
       <answer id="1">
       ${solution1}
       </answer>
@@ -164,15 +162,7 @@ async function solvePart(
       </problem>
     `;
 
-  let response = query({
-    prompt,
-    options: {
-      disallowedTools: ["WebSearch"],
-      model: "claude-haiku-4-5",
-      permissionMode: "bypassPermissions",
-      resume: sessionId,
-    },
-  });
+  let response = query({ prompt, options: { ...options, resume: sessionId } });
 
   for (let i = 0; i < 3; i++) {
     for await (const message of response) {
@@ -180,7 +170,15 @@ async function solvePart(
         case "assistant":
         case "user":
           for (const content of message.message.content) {
-            console.error("  " + JSON.stringify(content));
+            console.error(`  ${content.type.toUpperCase()}`);
+            for (const [key, value] of Object.entries(content)) {
+              if (key === "type") {
+                continue;
+              }
+              console.error(
+                `    ${key}: ${typeof value !== "string" || value.includes("\n") ? JSON.stringify(value) : value}`,
+              );
+            }
           }
           break;
         case "system":
@@ -188,10 +186,24 @@ async function solvePart(
       }
     }
 
-    let output = await readFile(outputPath(part), "utf8");
+    let output;
+    try {
+      output = await readFile(outputPath(part), "utf8");
+    } catch (error) {
+      if (error.code !== "ENOENT") {
+        throw error;
+      }
+      response = query({
+        prompt: `There is no file in ${outputPath(part)}. Save the output to that file.`,
+        options: { ...options, resume: sessionId },
+      });
+      continue;
+    }
     output = output.trim();
 
     if (await aocSubmit(session, { day, year, part, answer: output })) {
+      const end = performance.now();
+      console.error(`Solved in ${((end - start) / 1000).toFixed(0)}s`);
       return;
     }
 
@@ -199,12 +211,7 @@ async function solvePart(
 
     response = query({
       prompt: `${output} is incorrect. Please try again.`,
-      options: {
-        disallowedTools: ["WebSearch"],
-        model: "claude-haiku-4-5",
-        permissionMode: "bypassPermissions",
-        resume: sessionId,
-      },
+      options: { ...options, resume: sessionId },
     });
   }
 

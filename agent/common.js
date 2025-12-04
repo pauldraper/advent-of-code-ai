@@ -7,11 +7,15 @@ export function attemptsPath(part) {
 }
 
 export function inputPath() {
-  return "input.txt";
+  return "problem-input.txt";
 }
 
 export function problemPath(part) {
   return `problem-${part}.md`;
+}
+
+export function solutionPath(part) {
+  return `solution-${part}.py`;
 }
 
 export function outputPath(part) {
